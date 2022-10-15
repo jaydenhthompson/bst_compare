@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
-	"strconv"
-	"strings"
+	"fmt"
+	"time"
 
-	"src/main/src/tree"
+	"github.com/jaydenhthompson/bst_compare/src/bstUtil"
+	"github.com/jaydenhthompson/bst_compare/src/tree"
 )
 
 var (
@@ -18,51 +18,54 @@ var (
 
 func init() {
 	flag.StringVar(&inputFile, "input", "", "input file")
-	flag.IntVar(&hashWorkers, "hash-workers", 1, "number of hash workers")
-	flag.IntVar(&dataWorkers, "data-workers", 1, "number of data workers")
-	flag.IntVar(&compWorkers, "comp-workers", 1, "number of comp workers")
+	flag.IntVar(&hashWorkers, "hash-workers", 0, "number of hash workers")
+	flag.IntVar(&dataWorkers, "data-workers", 0, "number of data workers")
+	flag.IntVar(&compWorkers, "comp-workers", 0, "number of comp workers")
 
 	flag.Parse()
 }
 
-func parseFile() []*tree.Tree {
-	trees := []*tree.Tree{}
-	body, err := ioutil.ReadFile(inputFile)
-	if err != nil {
-		panic(err)
+func classifyTreeHashes(t []*tree.Tree, m map[int][]int) {
+	for i, tree := range t {
+		hash := tree.CalculateHash()
+		m[hash] = append(m[hash], i)
 	}
+}
 
-	lines := strings.Split(string(body), "\n")
-	for _, line := range lines {
-		bst := &tree.Tree{}
-		values := strings.Split(line, " ")
-		for _, value := range values {
-			if value == "" {
-				continue
-			}
-			intVal, err := strconv.Atoi(value)
-			if err != nil {
-				panic(err)
-			}
-			bst.Add(intVal)
+func compareHashedTrees(trees []*tree.Tree, hashMap map[int][]int, groupMap map[int][]int) {
+
+}
+
+func printHashMapping(time time.Duration, m map[int][]int) {
+	fmt.Printf("hashGroupTime: %d\n", time.Microseconds())
+	i := 0
+	for _, arr := range m {
+		fmt.Printf("hash%d:", i)
+		for _, index := range arr {
+			fmt.Printf(" id%d", index)
 		}
-		trees = append(trees, bst)
+		println()
+		i++
 	}
-
-	return trees
 }
 
 func main() {
-	trees := parseFile()
-	for _, tree := range trees {
-		for _, val := range tree.InOrderTraversal() {
-			print(val)
-			print(" ")
-		}
-		println()
-	}
+	trees := bstUtil.ParseFile(inputFile)
+	hashMap := make(map[int][]int)
 
-	for _, tree := range trees {
-		println(tree.CalculateHash())
-	}
+	hashStart := time.Now()
+	classifyTreeHashes(trees, hashMap)
+	hashDuration := time.Since(hashStart)
+
+	// util for removing hashes with only one tree
+	bstUtil.PruneMap(hashMap)
+
+	//groupMap := make(map[int][]int)
+
+	//compareStart := time.Now()
+	//compareHashedTrees(trees, hashMap, groupMap)
+	//compareDuration := time.Since(compareStart)
+	//bstUtil.PruneMap(groupMap)
+
+	printHashMapping(hashDuration, hashMap)
 }
