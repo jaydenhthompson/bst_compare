@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jaydenhthompson/bst_compare/src/bstUtil"
+	"github.com/jaydenhthompson/bst_compare/src/parallelUtil"
 	"github.com/jaydenhthompson/bst_compare/src/serialUtil"
 )
 
@@ -19,7 +20,7 @@ var (
 func init() {
 	flag.StringVar(&inputFile, "input", "", "input file")
 	flag.IntVar(&hashWorkers, "hash-workers", 0, "number of hash workers")
-	flag.IntVar(&dataWorkers, "data-workers", 0, "number of data workers")
+	flag.IntVar(&dataWorkers, "data-workers", 1, "number of data workers")
 	flag.IntVar(&compWorkers, "comp-workers", 0, "number of comp workers")
 
 	flag.Parse()
@@ -54,16 +55,19 @@ func main() {
 	hashMap := make(map[int][]int)
 
 	hashStart := time.Now()
-	serialUtil.ClassifyTreeHashes(trees, hashMap)
+	if hashWorkers <= 1 {
+		serialUtil.ClassifyTreeHashes(trees, hashMap)
+	} else {
+		parallelUtil.ClassifyTreeHashes(trees, hashMap, hashWorkers, dataWorkers)
+	}
 	hashDuration := time.Since(hashStart)
-
-	// util for removing hashes with only one tree
 	bstUtil.PruneMap(hashMap)
-
-	compareStart := time.Now()
-	groups := serialUtil.GroupHashedTrees(trees, hashMap)
-	compareDuration := time.Since(compareStart)
-
 	printHashMapping(hashDuration, hashMap)
-	printGroupings(compareDuration, groups)
+
+	if dataWorkers > 0 && compWorkers > 0 {
+		compareStart := time.Now()
+		groups := serialUtil.GroupHashedTrees(trees, hashMap)
+		compareDuration := time.Since(compareStart)
+		printGroupings(compareDuration, groups)
+	}
 }
