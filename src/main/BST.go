@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jaydenhthompson/bst_compare/src/bstUtil"
-	"github.com/jaydenhthompson/bst_compare/src/tree"
+	"github.com/jaydenhthompson/bst_compare/src/serialUtil"
 )
 
 var (
@@ -25,27 +25,27 @@ func init() {
 	flag.Parse()
 }
 
-func classifyTreeHashes(t []*tree.Tree, m map[int][]int) {
-	for i, tree := range t {
-		hash := tree.CalculateHash()
-		m[hash] = append(m[hash], i)
-	}
-}
-
-func compareHashedTrees(trees []*tree.Tree, hashMap map[int][]int, groupMap map[int][]int) {
-
-}
-
 func printHashMapping(time time.Duration, m map[int][]int) {
 	fmt.Printf("hashGroupTime: %d\n", time.Microseconds())
 	i := 0
 	for _, arr := range m {
-		fmt.Printf("hash%d:", i)
+		fmt.Printf("hash %d:", i)
 		for _, index := range arr {
-			fmt.Printf(" id%d", index)
+			fmt.Printf(" %d", index)
 		}
-		println()
+		fmt.Println()
 		i++
+	}
+}
+
+func printGroupings(time time.Duration, groups [][]int) {
+	fmt.Printf("compareTreeTime: %d\n", time.Microseconds())
+	for i, group := range groups {
+		fmt.Printf("group %d:", i)
+		for _, id := range group {
+			fmt.Printf(" %d", id)
+		}
+		fmt.Println()
 	}
 }
 
@@ -54,18 +54,16 @@ func main() {
 	hashMap := make(map[int][]int)
 
 	hashStart := time.Now()
-	classifyTreeHashes(trees, hashMap)
+	serialUtil.ClassifyTreeHashes(trees, hashMap)
 	hashDuration := time.Since(hashStart)
 
 	// util for removing hashes with only one tree
 	bstUtil.PruneMap(hashMap)
 
-	//groupMap := make(map[int][]int)
-
-	//compareStart := time.Now()
-	//compareHashedTrees(trees, hashMap, groupMap)
-	//compareDuration := time.Since(compareStart)
-	//bstUtil.PruneMap(groupMap)
+	compareStart := time.Now()
+	groups := serialUtil.GroupHashedTrees(trees, hashMap)
+	compareDuration := time.Since(compareStart)
 
 	printHashMapping(hashDuration, hashMap)
+	printGroupings(compareDuration, groups)
 }
