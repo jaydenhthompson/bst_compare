@@ -65,8 +65,13 @@ func main() {
 	printHashMapping(hashDuration, hashMap)
 
 	if dataWorkers > 0 && compWorkers > 0 {
+		var groups [][]int
 		compareStart := time.Now()
-		groups := serialUtil.GroupHashedTrees(trees, hashMap)
+		if compWorkers <= 1 {
+			groups = serialUtil.GroupHashedTrees(trees, hashMap)
+		} else {
+			groups = parallelUtil.GroupHashedTrees(trees, hashMap, compWorkers)
+		}
 		compareDuration := time.Since(compareStart)
 		printGroupings(compareDuration, groups)
 	}
