@@ -15,6 +15,7 @@ var (
 	hashWorkers int
 	dataWorkers int
 	compWorkers int
+	timeOnly    bool
 )
 
 func init() {
@@ -22,12 +23,15 @@ func init() {
 	flag.IntVar(&hashWorkers, "hash-workers", 0, "number of hash workers")
 	flag.IntVar(&dataWorkers, "data-workers", 1, "number of data workers")
 	flag.IntVar(&compWorkers, "comp-workers", 0, "number of comp workers")
-
+	flag.BoolVar(&timeOnly, "t", false, "print times only")
 	flag.Parse()
 }
 
 func printHashMapping(time time.Duration, m map[int][]int) {
 	fmt.Printf("hashGroupTime: %d\n", time.Microseconds())
+	if timeOnly {
+		return
+	}
 	i := 0
 	for _, arr := range m {
 		fmt.Printf("hash %d:", i)
@@ -41,6 +45,9 @@ func printHashMapping(time time.Duration, m map[int][]int) {
 
 func printGroupings(time time.Duration, groups [][]int) {
 	fmt.Printf("compareTreeTime: %d\n", time.Microseconds())
+	if timeOnly {
+		return
+	}
 	for i, group := range groups {
 		fmt.Printf("group %d:", i)
 		for _, id := range group {

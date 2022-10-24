@@ -1,6 +1,9 @@
 package parallelUtil
 
-import "sync"
+import (
+	"container/list"
+	"sync"
+)
 
 type Work struct {
 	a int
@@ -9,53 +12,47 @@ type Work struct {
 
 type Buffer struct {
 	stop bool
-	data []*Work
+	data *list.List
 
-	mtx  *sync.Mutex
-	cond *sync.Cond
+	mtx     *sync.Mutex
+	popCond *sync.Cond
 }
 
 func NewBuffer() *Buffer {
 	b := &Buffer{
-		data: make([]*Work, 0),
+		data: list.New(),
 		stop: false,
 		mtx:  &sync.Mutex{},
 	}
-	b.cond = sync.NewCond(b.mtx)
+	b.popCond = sync.NewCond(b.mtx)
 	return b
 }
 
 func (b *Buffer) Push(w *Work) {
 	b.mtx.Lock()
 	defer b.mtx.Unlock()
-	b.data = append(b.data, w)
-	b.cond.Signal()
+	b.data.PushBack(w)
+	b.popCond.Signal()
 }
 
 func (b *Buffer) Pop() *Work {
 	b.mtx.Lock()
 	defer b.mtx.Unlock()
-	if len(b.data) <= 0 {
+	for b.data.Len() <= 0 {
 		if b.stop {
 			return nil
 		}
-		b.cond.Wait()
+		b.popCond.Wait()
 	}
-	if len(b.data) <= 0 {
-		return nil
-	}
-	w := b.data[0]
-	if len(b.data) <= 1 {
-		b.data = []*Work{}
-	} else {
-		b.data = b.data[1:]
-	}
+	cur := b.data.Front()
+	w := cur.Value.(*Work)
+	b.data.Remove(cur)
 	return w
 }
 
 func (b *Buffer) Wait() {
 	for {
-		if len(b.data) <= 0 {
+		if b.data.Len() <= 0 {
 			return
 		}
 	}
@@ -63,8 +60,5 @@ func (b *Buffer) Wait() {
 
 func (b *Buffer) Stop() {
 	b.stop = true
-	for i := 0; i < 10; i++ {
-		b.cond.Signal()
-	}
-	b.cond.Broadcast()
+	b.popCond.Broadcast()
 }
