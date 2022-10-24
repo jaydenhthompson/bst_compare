@@ -105,21 +105,19 @@ func ClassifyTreeHashes(t []*tree.Tree, m map[int][]int, hashWorkers, dataWorker
 }
 
 func CompWorker(trees []*tree.Tree, buff *Buffer, adj [][]bool) {
-	for running {
-		for {
-			w := buff.Pop()
-			if w != nil {
-				if adj[w.a][w.b] || adj[w.b][w.a] {
-					continue
-				}
-				eq := bstUtil.CompareSlices(trees[w.a].InOrderTraversal(), trees[w.b].InOrderTraversal())
-				if eq {
-					adj[w.a][w.b] = true
-					adj[w.b][w.a] = true
-				}
-			} else {
-				break
+	for {
+		w := buff.Pop()
+		if w != nil {
+			if adj[w.a][w.b] || adj[w.b][w.a] {
+				continue
 			}
+			eq := bstUtil.CompareSlices(trees[w.a].InOrderTraversal(), trees[w.b].InOrderTraversal())
+			if eq {
+				adj[w.a][w.b] = true
+				adj[w.b][w.a] = true
+			}
+		} else if !running {
+			break
 		}
 	}
 	wg.Done()
@@ -145,6 +143,7 @@ func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int, compWorkers int
 		}
 	}
 
+	buff.Wait()
 	running = false
 	buff.Stop()
 	wg.Wait()
