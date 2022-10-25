@@ -24,6 +24,9 @@ func compareTreeArray(trees []*tree.Tree, indexes []int) [][]int {
 	matchMap := make(map[int]map[int]struct{})
 	matched := make([]bool, len(indexes))
 	for i := range indexes {
+		if matched[i] {
+			continue
+		}
 		for j := i + 1; j < len(indexes); j++ {
 			if matched[j] {
 				continue

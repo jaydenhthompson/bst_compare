@@ -108,17 +108,26 @@ func CompWorker(trees []*tree.Tree, buff *Buffer, adj [][]bool, matched []bool) 
 	for {
 		w := buff.Pop()
 		if w != nil {
-			if matched[w.b] {
+			if adj[w.b][w.a] {
 				continue
 			}
 			eq := bstUtil.CompareSlices(trees[w.a].InOrderTraversal(), trees[w.b].InOrderTraversal())
 			if eq {
 				adj[w.a][w.b] = true
-				matched[w.b] = true
+				adj[w.b][w.a] = true
 			}
 		} else if !running {
 			break
 		}
+	}
+	wg.Done()
+}
+
+func FirstCompWorker(trees []*tree.Tree, adj [][]bool, i, j int) {
+	eq := bstUtil.CompareSlices(trees[i].InOrderTraversal(), trees[j].InOrderTraversal())
+	if eq {
+		adj[i][j] = true
+		adj[j][i] = true
 	}
 }
 
@@ -129,6 +138,7 @@ func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int, compWorkers int
 		adj[i] = make([]bool, len(trees))
 	}
 
+	wg.Add(compWorkers)
 	buff := NewBuffer()
 	for i := 0; i < compWorkers; i++ {
 		go CompWorker(trees, buff, adj, matched)
@@ -145,6 +155,7 @@ func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int, compWorkers int
 	buff.Wait()
 	running = false
 	buff.Stop()
+	wg.Wait()
 
 	visited := make(map[int]bool)
 	groups := make([][]int, 0)
@@ -155,10 +166,7 @@ func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int, compWorkers int
 		group := make([]int, 0)
 		group = append(group, i)
 		for j := 0; j < len(adj); j++ {
-			if !adj[i][j] {
-				continue
-			}
-			if visited[j] {
+			if !adj[i][j] || visited[j] {
 				continue
 			}
 			visited[j] = true
