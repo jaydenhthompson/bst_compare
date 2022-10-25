@@ -32,14 +32,12 @@ func printHashMapping(time time.Duration, m map[int][]int) {
 	if timeOnly {
 		return
 	}
-	i := 0
-	for _, arr := range m {
-		fmt.Printf("hash %d:", i)
+	for hash, arr := range m {
+		fmt.Printf("%d:", hash)
 		for _, index := range arr {
 			fmt.Printf(" %d", index)
 		}
 		fmt.Println()
-		i++
 	}
 }
 
