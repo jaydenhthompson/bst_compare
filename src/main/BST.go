@@ -20,14 +20,18 @@ var (
 
 func init() {
 	flag.StringVar(&inputFile, "input", "", "input file")
-	flag.IntVar(&hashWorkers, "hash-workers", 0, "number of hash workers")
-	flag.IntVar(&dataWorkers, "data-workers", 1, "number of data workers")
+	flag.IntVar(&hashWorkers, "hash-workers", 1, "number of hash workers")
+	flag.IntVar(&dataWorkers, "data-workers", 0, "number of data workers")
 	flag.IntVar(&compWorkers, "comp-workers", 0, "number of comp workers")
 	flag.BoolVar(&timeOnly, "t", false, "print times only")
 	flag.Parse()
 }
 
 func printHashMapping(time time.Duration, m map[int][]int) {
+	if dataWorkers <= 0 {
+		fmt.Printf("hashTime: %d\n", time.Microseconds())
+		return
+	}
 	fmt.Printf("hashGroupTime: %d\n", time.Microseconds())
 	if timeOnly {
 		return

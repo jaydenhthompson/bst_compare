@@ -38,12 +38,14 @@ func DataWorker(m map[int][]int, dataChan chan Data) {
 	}
 }
 
-func HashWorker(t []*tree.Tree, index chan int, dataChan chan Data) {
+func HashWorker(t []*tree.Tree, index chan int, dataChan chan Data, sendData bool) {
 	for {
 		select {
 		case idx := <-index:
 			hash := t[idx].CalculateHash()
-			dataChan <- Data{idx: idx, hash: hash}
+			if sendData {
+				dataChan <- Data{idx: idx, hash: hash}
+			}
 		case <-hashStop:
 			wg.Done()
 			return
@@ -81,9 +83,13 @@ func ClassifyTreeHashes(t []*tree.Tree, m map[int][]int, hashWorkers, dataWorker
 	dataChan := make(chan Data)
 	indexChan := make(chan int)
 
+	sendData := true
+	if dataWorkers < 1 {
+		sendData = false
+	}
 	wg.Add(hashWorkers)
 	for i := 0; i < hashWorkers; i++ {
-		go HashWorker(t, indexChan, dataChan)
+		go HashWorker(t, indexChan, dataChan, sendData)
 	}
 	for i := 0; i < dataWorkers; i++ {
 		go DataWorker(m, dataChan)
