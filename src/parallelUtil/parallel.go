@@ -129,6 +129,7 @@ func FirstCompWorker(trees []*tree.Tree, adj [][]bool, i, j int) {
 		adj[i][j] = true
 		adj[j][i] = true
 	}
+	wg.Done()
 }
 
 func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int, compWorkers int) [][]int {
