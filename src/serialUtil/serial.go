@@ -13,44 +13,44 @@ func ClassifyTreeHashes(t []*tree.Tree, m map[int][]int) {
 }
 
 func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int) [][]int {
-	groups := make([][]int, 0)
-	for _, matchingTrees := range hashMap {
-		groups = append(groups, compareTreeArray(trees, matchingTrees)...)
+	adj := make([][]bool, len(trees))
+	for i := range adj {
+		adj[i] = make([]bool, len(trees))
 	}
-	return groups
-}
 
-func compareTreeArray(trees []*tree.Tree, indexes []int) [][]int {
-	matchMap := make(map[int]map[int]struct{})
-	matched := make([]bool, len(indexes))
-	for i := range indexes {
-		if matched[i] {
+	for _, matchingTrees := range hashMap {
+		for i := range matchingTrees {
+			for j := i + 1; j < len(matchingTrees); j++ {
+				if adj[matchingTrees[j]][matchingTrees[i]] {
+					continue
+				}
+				if bstUtil.CompareSlices(trees[matchingTrees[i]].InOrderTraversal(), trees[matchingTrees[j]].InOrderTraversal()) {
+					adj[matchingTrees[i]][matchingTrees[j]] = true
+					adj[matchingTrees[j]][matchingTrees[i]] = true
+				}
+			}
+		}
+	}
+
+	visited := make(map[int]bool)
+	groups := make([][]int, 0)
+	for i := 0; i < len(adj); i++ {
+		if visited[i] {
 			continue
 		}
-		for j := i + 1; j < len(indexes); j++ {
-			if matched[j] {
+		group := make([]int, 0)
+		group = append(group, i)
+		for j := 0; j < len(adj); j++ {
+			if !adj[i][j] || visited[j] {
 				continue
 			}
-			if bstUtil.CompareSlices(trees[indexes[i]].InOrderTraversal(), trees[indexes[j]].InOrderTraversal()) {
-				if matchMap[indexes[i]] == nil {
-					matchMap[indexes[i]] = map[int]struct{}{
-						indexes[i]: {},
-					}
-				}
-				matched[j] = true
-				matchMap[indexes[i]][indexes[j]] = struct{}{}
-			}
+			visited[j] = true
+			group = append(group, j)
 		}
-	}
-
-	matchMatrix := make([][]int, len(matchMap))
-	i := 0
-	for _, v := range matchMap {
-		matchMatrix[i] = make([]int, 0, len(v))
-		for k, _ := range v {
-			matchMatrix[i] = append(matchMatrix[i], k)
+		if len(group) > 1 {
+			groups = append(groups, group)
 		}
-		i++
+		visited[i] = true
 	}
-	return matchMatrix
+	return groups
 }
