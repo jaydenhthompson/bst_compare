@@ -65,7 +65,9 @@ func FirstHashImplementation(t []*tree.Tree, m map[int][]int, dataWorkers int) {
 		go func(i int) {
 			defer wg.Done()
 			hash := t[i].CalculateHash()
-			dataChan <- Data{idx: i, hash: hash}
+			if dataWorkers > 0 {
+				dataChan <- Data{idx: i, hash: hash}
+			}
 		}(i)
 	}
 	wg.Wait()
@@ -110,7 +112,7 @@ func ClassifyTreeHashes(t []*tree.Tree, m map[int][]int, hashWorkers, dataWorker
 	wg.Wait()
 }
 
-func CompWorker(trees []*tree.Tree, buff *Buffer, adj [][]bool, matched []bool) {
+func CompWorker(trees []*tree.Tree, buff *Buffer, adj [][]bool) {
 	for {
 		w := buff.Pop()
 		if w != nil {
@@ -140,7 +142,6 @@ func FirstCompWorker(trees []*tree.Tree, adj [][]bool, i, j int) {
 
 func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int, compWorkers int) [][]int {
 	adj := make([][]bool, len(trees))
-	matched := make([]bool, len(trees))
 	for i := range adj {
 		adj[i] = make([]bool, len(trees))
 	}
@@ -148,7 +149,7 @@ func GroupHashedTrees(trees []*tree.Tree, hashMap map[int][]int, compWorkers int
 	wg.Add(compWorkers)
 	buff := NewBuffer()
 	for i := 0; i < compWorkers; i++ {
-		go CompWorker(trees, buff, adj, matched)
+		go CompWorker(trees, buff, adj)
 	}
 
 	for _, matchingTrees := range hashMap {

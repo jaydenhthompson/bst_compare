@@ -29,10 +29,10 @@ func init() {
 
 func printHashMapping(time time.Duration, m map[int][]int) {
 	if dataWorkers <= 0 {
-		fmt.Printf("hashTime: %d\n", time.Microseconds())
+		fmt.Printf("hashTime: %d\n", time.Milliseconds())
 		return
 	}
-	fmt.Printf("hashGroupTime: %d\n", time.Microseconds())
+	fmt.Printf("hashGroupTime: %d\n", time.Milliseconds())
 	if timeOnly {
 		return
 	}
@@ -46,7 +46,7 @@ func printHashMapping(time time.Duration, m map[int][]int) {
 }
 
 func printGroupings(time time.Duration, groups [][]int) {
-	fmt.Printf("compareTreeTime: %d\n", time.Microseconds())
+	fmt.Printf("compareTreeTime: %d\n", time.Milliseconds())
 	if timeOnly {
 		return
 	}
